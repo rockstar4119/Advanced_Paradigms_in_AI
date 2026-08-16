@@ -1,0 +1,28 @@
+# Git
+.git
+.gitignore
+
+# Frontend files (not needed for backend container)
+frontend/
+node_modules/
+
+# Python virtual environments & bytecode
+.venv/
+venv/
+env/
+myenv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Editor & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.md
+LICENSE
