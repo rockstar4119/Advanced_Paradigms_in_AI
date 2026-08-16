@@ -64,16 +64,17 @@ export function GraphCanvas({ edges, history, playheadIndex }: GraphCanvasProps)
       renderedEdgeCount.current = 0
       return
     }
-    for (let i = renderedEdgeCount.current; i < edges.length; i++) {
-      controller.addEdge(edges[i].source, edges[i].target, edges[i].weight)
-    }
+    controller.addEdges(edges.slice(renderedEdgeCount.current))
     renderedEdgeCount.current = edges.length
   }, [edges])
 
   useEffect(() => {
     const controller = controllerRef.current
     if (!controller) return
+    // Rewind to a clean slate, then replay up to the playhead. This is what
+    // makes scrubbing backwards actually undo work rather than just stop it.
     controller.applyObservedLabels(nodes)
+    controller.clearTransientState()
     for (let i = 0; i <= playheadIndex && i < history.length; i++) {
       const event = history[i]
       if (event.type === 'iteration') {

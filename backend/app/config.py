@@ -29,7 +29,13 @@ class Settings:
     default_max_iter: int = int(os.getenv("DEFAULT_MAX_ITER", "200"))
     default_tol: float = float(os.getenv("DEFAULT_TOL", "1e-4"))
     session_ttl_seconds: int = int(os.getenv("SESSION_TTL_SECONDS", "3600"))
-    stream_delay_seconds: float = float(os.getenv("STREAM_DELAY_SECONDS", "0.01"))
+    #: Server-side throttle between streamed steps. Defaults to off: how fast an
+    #: animation *reads* is a presentation decision, and the client owns it — it
+    #: has the play/pause/scrub timeline and can re-time a run without a redeploy.
+    #: Pacing here instead was unreliable (sub-millisecond under uvicorn's Windows
+    #: proactor loop, ~15 ms per step elsewhere) and it delayed the data itself,
+    #: so a scrubbed-back timeline could not be replayed any faster than the wire.
+    stream_delay_seconds: float = float(os.getenv("STREAM_DELAY_SECONDS", "0.0"))
 
 
 settings = Settings()

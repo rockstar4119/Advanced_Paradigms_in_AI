@@ -31,8 +31,10 @@ export function StudioPage() {
   const [results, setResults] = useState<Partial<Record<Algorithm, DoneEvent>>>({})
   const [activeTab, setActiveTab] = useState<InterpTab>('all')
 
+  // Goes false again while a rebuild draws itself, so propagation can't be
+  // launched against a graph that is still only half on screen.
   useEffect(() => {
-    if (graphBuild.edgeCount !== null) setGraphReady(true)
+    setGraphReady(graphBuild.edgeCount !== null)
   }, [graphBuild.edgeCount, setGraphReady])
 
   useEffect(() => {
@@ -63,14 +65,18 @@ export function StudioPage() {
       <aside className="control-rail">
         <DatasetSelector />
         <GraphControls onBuild={graphBuild.build} isBuilding={graphBuild.isBuilding} disabled={!sessionId} />
-        <AlgorithmControls onRun={propagation.run} disabled={!graphReady} isRunning={propagation.isRunning} />
+        <AlgorithmControls
+          onRun={propagation.run}
+          disabled={!graphReady || graphBuild.isBuilding}
+          isRunning={propagation.isRunning}
+        />
       </aside>
 
       <main className="stage">
         <GraphCanvas edges={graphBuild.edges} history={propagation.history} playheadIndex={playheadIndex} />
         <TelemetryStrip history={propagation.history} playheadIndex={playheadIndex} isRunning={propagation.isRunning} />
         <PlaybackControls
-          historyLength={propagation.history.length}
+          history={propagation.history}
           playheadIndex={playheadIndex}
           onChange={setPlayheadIndex}
           isRunning={propagation.isRunning}

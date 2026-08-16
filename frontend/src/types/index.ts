@@ -1,4 +1,4 @@
-export type DatasetType = 'two_moons' | 'circles' | 'blobs'
+export type DatasetType = 'two_moons' | 'circles' | 'blobs' | 'patient_zero'
 export type GraphMethod = 'knn' | 'rbf'
 export type Algorithm = 'harmonic' | 'mincut'
 
@@ -103,8 +103,26 @@ export interface DoneEvent {
   accuracy: number
   confusion_matrix: number[][]
   per_class: ClassMetric[]
-  mean_entropy?: number
   energy_trace?: number[]
+
+  // Argmax scores — always present.
+  n_evaluated?: number
+  balanced_accuracy?: number
+  macro_precision?: number
+  macro_recall?: number
+  macro_f1?: number
+  weighted_f1?: number
+  cohen_kappa?: number
+  matthews_corrcoef?: number
+
+  // Posterior scores — harmonic only; min-cut returns a hard partition.
+  mean_entropy?: number
+  mean_confidence?: number
+  mean_margin?: number
+  confidence_gap?: number
+  brier_score?: number
+  log_loss?: number
+  auroc_macro?: number
 }
 
 export type PropagationStreamEvent =

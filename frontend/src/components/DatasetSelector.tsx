@@ -5,6 +5,22 @@ import { useGraphStore } from '../hooks/useGraphStore'
 import { Spinner } from './Spinner'
 import type { DatasetType } from '../types'
 
+/**
+ * Most sources here are shapes with a boundary drawn through them, and they
+ * need no explanation. Patient Zero does: its labels come from a simulated
+ * epidemic rather than from geometry, so the studio is being asked to do
+ * something categorically different, and the panel should say so.
+ */
+const SCENARIOS: Partial<Record<DatasetType, { title: string; body: string; hint: string }>> = {
+  patient_zero: {
+    title: 'Outbreak contact tracing',
+    body:
+      'Four communities in a lifestyle space, a contact network laid over them — near neighbours plus a few long-haul flights — and a stochastic infection cascade run from one super-connected index case. The label is who the outbreak reached, not which side of a curve they stand on.',
+    hint:
+      'Reveal ~10% as test results and build k-NN at k ≈ 6. Propagation recovers the local spread almost perfectly; the flight-borne pocket on the far side of the ring is unreachable by distance alone, and shows up as confident errors in the diagnostics.',
+  },
+}
+
 const N_SAMPLES_RANGE = { min: 40, max: 500 }
 const NOISE_RANGE = { min: 0, max: 0.5 }
 const IMBALANCE_RANGE = { min: 0.05, max: 0.5 }
@@ -39,6 +55,8 @@ export function DatasetSelector() {
     }
   }
 
+  const scenario = SCENARIOS[datasetType]
+
   const uploadCsv = async (file: File) => {
     setIsLoading(true)
     setError(null)
@@ -67,8 +85,17 @@ export function DatasetSelector() {
           <option value="two_moons">Two moons</option>
           <option value="circles">Concentric circles</option>
           <option value="blobs">Blobs (imbalance-adjustable)</option>
+          <option value="patient_zero">Patient Zero (simulated outbreak)</option>
         </select>
       </div>
+
+      {scenario && (
+        <div className="scenario-card">
+          <span className="scenario-title">{scenario.title}</span>
+          <p className="scenario-body">{scenario.body}</p>
+          <p className="scenario-hint">{scenario.hint}</p>
+        </div>
+      )}
 
       <div className="field">
         <div className="field-row">

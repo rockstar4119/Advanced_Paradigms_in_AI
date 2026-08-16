@@ -17,11 +17,28 @@ from app.core.label_propagation.mincut import (
     MincutStep,
     OneVsRestMincut,
 )
-from app.core.metrics import MetricsCalculator
+from app.core.metrics import EvaluationResult, MetricsCalculator
 from app.core.state import SessionState, session_store
 from app.schemas import PropagationRunParams
 
 router = APIRouter()
+
+
+def _hard_metrics(result: EvaluationResult) -> dict:
+    """The argmax-only scores, shared by both algorithms."""
+    return {
+        "accuracy": result.accuracy,
+        "balanced_accuracy": result.balanced_accuracy,
+        "macro_precision": result.macro_precision,
+        "macro_recall": result.macro_recall,
+        "macro_f1": result.macro_f1,
+        "weighted_f1": result.weighted_f1,
+        "cohen_kappa": result.cohen_kappa,
+        "matthews_corrcoef": result.matthews_corrcoef,
+        "n_evaluated": result.n_evaluated,
+        "confusion_matrix": result.confusion_matrix,
+        "per_class": [vars(m) for m in result.per_class],
+    }
 
 
 class PropagationSocket:
@@ -73,23 +90,24 @@ class PropagationSocket:
 
         unlabeled_mask = session.observed_labels < 0
         result = self.metrics.evaluate(session.dataset.y_true, y_pred, unlabeled_mask)
-        mean_entropy = self.metrics.mean_entropy(soft_labels, unlabeled_mask)
+        posterior = self.metrics.probabilistic(
+            soft_labels, session.dataset.y_true, unlabeled_mask, result.accuracy
+        )
 
         session.last_algorithm = "harmonic"
         session.last_soft_labels = soft_labels
         session.last_predictions = y_pred
 
-        await self.websocket.send_json(
-            {
-                "type": "done",
-                "labels": {int(i): int(y_pred[i]) for i in range(len(y_pred))},
-                "accuracy": result.accuracy,
-                "confusion_matrix": result.confusion_matrix,
-                "per_class": [vars(m) for m in result.per_class],
-                "mean_entropy": mean_entropy,
-                "energy_trace": energy_trace,
-            }
-        )
+        payload = {
+            "type": "done",
+            "labels": {int(i): int(y_pred[i]) for i in range(len(y_pred))},
+            "energy_trace": energy_trace,
+            **_hard_metrics(result),
+        }
+        if posterior is not None:
+            payload.update(vars(posterior))
+
+        await self.websocket.send_json(payload)
 
     async def _run_mincut(self, session: SessionState, params: PropagationRunParams) -> None:
         n_classes = session.dataset.n_classes
@@ -125,9 +143,7 @@ class PropagationSocket:
             {
                 "type": "done",
                 "labels": {int(i): int(y_pred[i]) for i in range(len(y_pred))},
-                "accuracy": result.accuracy,
-                "confusion_matrix": result.confusion_matrix,
-                "per_class": [vars(m) for m in result.per_class],
+                **_hard_metrics(result),
             }
         )
 
