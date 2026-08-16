@@ -977,3 +977,176 @@ button:disabled {
   text-align: left;
   padding-top: 8px;
 }
+
+/* ============================================================
+   Responsive Media Queries
+   ============================================================ */
+
+@media (max-width: 1024px) {
+  .page {
+    height: auto;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .app-shell {
+    grid-template-columns: 1fr;
+    height: auto;
+    min-height: 0;
+  }
+
+  .control-rail {
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+    padding: 16px;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .stage {
+    padding: 16px;
+    height: auto;
+    overflow: visible;
+  }
+
+  .canvas-frame {
+    height: clamp(340px, 48vh, 500px);
+    min-height: 300px;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-header {
+    padding: 12px 14px;
+    gap: 12px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .brand {
+    justify-content: flex-start;
+  }
+
+  .brand-text h1 {
+    font-size: 1.15rem;
+  }
+
+  .brand-text .tagline {
+    font-size: 0.7rem;
+  }
+
+  .header-right {
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .phase-track {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+    max-width: calc(100vw - 160px);
+    scrollbar-width: none;
+  }
+
+  .phase-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .phase-pill {
+    padding: 4px 8px 4px 5px;
+    font-size: 0.68rem;
+    white-space: nowrap;
+    flex: none;
+  }
+
+  .route-tabs {
+    padding: 2px;
+  }
+
+  .route-tab {
+    padding: 5px 12px;
+    font-size: 0.74rem;
+  }
+
+  .telemetry-strip {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 12px;
+    font-size: 0.68rem;
+  }
+
+  .playback-controls {
+    flex-wrap: wrap;
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .playback-controls input[type='range'] {
+    order: 3;
+    width: 100%;
+    flex: 1 1 100%;
+    margin-top: 4px;
+  }
+
+  .playback-count {
+    margin-left: auto;
+    font-size: 0.72rem;
+  }
+
+  .stat-value {
+    font-size: 1.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-header {
+    padding: 10px 12px;
+  }
+
+  .brand-mark {
+    width: 26px;
+    height: 26px;
+  }
+
+  .brand-text h1 {
+    font-size: 1.05rem;
+  }
+
+  .phase-track {
+    max-width: 100%;
+  }
+
+  .stage,
+  .control-rail {
+    padding: 12px;
+  }
+
+  .panel {
+    padding: 12px 12px 14px;
+    border-radius: var(--radius-sm);
+  }
+
+  .canvas-frame {
+    height: 300px;
+    min-height: 260px;
+  }
+
+  .canvas-badge {
+    font-size: 0.65rem;
+    padding: 4px 8px;
+    top: 8px;
+    left: 8px;
+  }
+
+  .fit-button {
+    top: 8px;
+    right: 8px;
+    width: 30px;
+    height: 30px;
+  }
+
+  .toggle-row {
+    font-size: 0.8rem;
+  }
+}

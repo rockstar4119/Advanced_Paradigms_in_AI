@@ -908,6 +908,14 @@
 
 /* ---------- responsive ---------- */
 
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 6px 0;
+  max-width: 100%;
+}
+
 @media (max-width: 940px) {
   .method-shell {
     grid-template-columns: 1fr;
@@ -918,13 +926,13 @@
   .m-toc {
     position: static;
     max-height: none;
-    padding: 28px 0 0;
+    padding: 24px 0 0;
   }
 
   .m-toc ol {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 6px;
     border-left: none;
   }
 
@@ -942,6 +950,37 @@
   }
 
   .method-body {
-    padding-top: 28px;
+    padding-top: 24px;
   }
 }
+
+@media (max-width: 640px) {
+  .method-shell {
+    padding: 0 14px 48px;
+  }
+
+  .m-figure {
+    padding: 14px 12px;
+    border-radius: var(--radius-sm);
+  }
+
+  .m-controls {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .m-controls button {
+    flex: 1 1 calc(50% - 8px);
+  }
+
+  .m-legend {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .method-body {
+    font-size: 0.88rem;
+    line-height: 1.65;
+  }
+}
+
