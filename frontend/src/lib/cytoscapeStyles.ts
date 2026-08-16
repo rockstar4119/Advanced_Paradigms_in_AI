@@ -6,7 +6,21 @@ import { UNLABELED_COLOR } from './colors'
 // survived only as slivers between discs. Shrinking the marks hands that space
 // back to the structure; brightness, not area, is what makes a node readable.
 export const NODE_SIZE = 9
-export const INSPECTED_NODE_SIZE = 13
+export const LABELED_NODE_SIZE = 11
+export const INSPECTED_NODE_SIZE = 14
+
+/**
+ * Seeds are the few nodes the whole run hangs off, so they must stay findable
+ * when the graph is zoomed out to a thumbnail. Their halo is therefore sized in
+ * *screen* pixels and converted to model units against the live zoom
+ * (see `CytoscapeGraphController.syncGlowToZoom`) — a fixed model-space padding
+ * shrinks with everything else and vanishes exactly when it is needed most.
+ */
+export const GLOW_SCREEN_PADDING = 13
+export const GLOW_MODEL_PADDING_MIN = 4
+export const GLOW_MODEL_PADDING_MAX = 120
+export const GLOW_OPACITY_NEAR = 0.7
+export const GLOW_OPACITY_FAR = 0.95
 
 const EDGE_MIN_WIDTH = 0.5
 const EDGE_MAX_WIDTH = 1.9
@@ -39,13 +53,20 @@ export const cytoscapeStyles: cytoscape.StylesheetStyle[] = [
     },
   },
   {
+    // A seed reads as a lit core inside a coloured halo: the white ring keeps
+    // the core crisp at close range, and the halo — held at a constant screen
+    // size by syncGlowToZoom — is what survives when the graph is zoomed out
+    // far enough that the 9px core is a single pixel.
     selector: 'node[?labeled]',
     style: {
+      width: LABELED_NODE_SIZE,
+      height: LABELED_NODE_SIZE,
       'underlay-color': 'data(glowColor)',
-      'underlay-opacity': 0.45,
-      'underlay-padding': 5,
+      'underlay-opacity': 0.7,
+      'underlay-padding': GLOW_MODEL_PADDING_MIN,
       'underlay-shape': 'ellipse',
-      'border-color': 'rgba(255, 255, 255, 0.75)',
+      'border-width': 2,
+      'border-color': 'rgba(255, 255, 255, 0.92)',
       'z-index': 20,
     },
   },
