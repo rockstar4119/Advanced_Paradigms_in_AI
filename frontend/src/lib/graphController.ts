@@ -1,5 +1,13 @@
 import cytoscape, { Core } from 'cytoscape'
-import { cytoscapeStyles, edgeVisual } from './cytoscapeStyles'
+import {
+  cytoscapeStyles,
+  edgeVisual,
+  GLOW_MODEL_PADDING_MAX,
+  GLOW_MODEL_PADDING_MIN,
+  GLOW_OPACITY_FAR,
+  GLOW_OPACITY_NEAR,
+  GLOW_SCREEN_PADDING,
+} from './cytoscapeStyles'
 import { blendColor, classColor, UNLABELED_COLOR } from './colors'
 import type { NodeOut } from '../types'
 
@@ -26,6 +34,37 @@ export class CytoscapeGraphController {
       if (shift) this.onNodeClick?.(nodeId)
       else this.onNodeInspect?.(nodeId)
     })
+    this.cy.on('zoom', () => this.syncGlowToZoom())
+  }
+
+  /**
+   * Re-express the seed halo in model units so that it covers a constant number
+   * of *screen* pixels. Cytoscape scales node styling with the viewport, so a
+   * halo authored in model space shrinks along with everything else and is
+   * gone by the time the user has zoomed out far enough to need it. Solving
+   * `padding * zoom = GLOW_SCREEN_PADDING` keeps seeds equally findable
+   * whether the graph fills the canvas or sits in a corner of it.
+   */
+  private syncGlowToZoom(): void {
+    const zoom = this.cy.zoom()
+    if (!Number.isFinite(zoom) || zoom <= 0) return
+
+    const padding = Math.min(
+      GLOW_MODEL_PADDING_MAX,
+      Math.max(GLOW_MODEL_PADDING_MIN, GLOW_SCREEN_PADDING / zoom),
+    )
+    // Zoomed in, the halo is a glow around a visible core and should stay
+    // translucent. Zoomed out the core is sub-pixel and the halo *is* the seed,
+    // so it firms up into a solid dot rather than fading to a smudge.
+    const solidity = Math.min(1, Math.max(0, (1 - zoom) / 0.75))
+    const opacity = GLOW_OPACITY_NEAR + (GLOW_OPACITY_FAR - GLOW_OPACITY_NEAR) * solidity
+
+    this.cy.batch(() => {
+      this.cy.nodes('[?labeled]').style({
+        'underlay-padding': padding,
+        'underlay-opacity': opacity,
+      })
+    })
   }
 
   setInspectHandler(handler: (nodeId: number) => void): void {
@@ -50,20 +89,24 @@ export class CytoscapeGraphController {
   }
 
   applyObservedLabels(nodes: NodeOut[]): void {
-    nodes.forEach((node) => {
-      const cyNode = this.cy.getElementById(String(node.id))
-      if (cyNode.empty()) return
-      if (node.observed_label !== null) {
-        const color = classColor(node.observed_label)
-        cyNode.style('background-color', color)
-        cyNode.data('labeled', true)
-        cyNode.data('glowColor', color)
-      } else {
-        cyNode.style('background-color', UNLABELED_COLOR)
-        cyNode.data('labeled', false)
-        cyNode.data('glowColor', undefined)
-      }
+    this.cy.batch(() => {
+      nodes.forEach((node) => {
+        const cyNode = this.cy.getElementById(String(node.id))
+        if (cyNode.empty()) return
+        if (node.observed_label !== null) {
+          const color = classColor(node.observed_label)
+          cyNode.style('background-color', color)
+          cyNode.data('labeled', true)
+          cyNode.data('glowColor', color)
+        } else {
+          cyNode.style('background-color', UNLABELED_COLOR)
+          cyNode.data('labeled', false)
+          cyNode.data('glowColor', undefined)
+        }
+      })
     })
+    // Nodes that just became seeds still carry the stylesheet's minimum halo.
+    this.syncGlowToZoom()
   }
 
   /**
