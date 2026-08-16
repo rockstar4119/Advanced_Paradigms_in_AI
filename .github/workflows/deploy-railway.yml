@@ -1,0 +1,29 @@
+name: Deploy Backend to Railway
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main", "master" ]
+    paths:
+      - 'backend/**'
+      - 'railway.json'
+      - '.github/workflows/deploy-railway.yml'
+
+jobs:
+  deploy:
+    name: Deploy to Railway
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm i -g @railway/cli
+
+      - name: Deploy to Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_SERVICE: ${{ secrets.RAILWAY_SERVICE_NAME }}
+        if: env.RAILWAY_TOKEN != ''
+        run: |
+          railway up --service "${{ secrets.RAILWAY_SERVICE_NAME }}" --detach
