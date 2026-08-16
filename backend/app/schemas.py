@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 
 class GenerateDatasetRequest(BaseModel):
-    dataset_type: Literal["two_moons", "circles", "blobs"]
+    dataset_type: Literal["two_moons", "circles", "blobs", "patient_zero"]
     n_samples: int = Field(default=200, ge=20, le=500)
     noise: float = Field(default=0.1, ge=0.0, le=1.0)
     imbalance_ratio: float = Field(default=0.5, ge=0.05, le=0.95)

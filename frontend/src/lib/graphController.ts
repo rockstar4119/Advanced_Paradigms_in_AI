@@ -1,5 +1,5 @@
 import cytoscape, { Core } from 'cytoscape'
-import { cytoscapeStyles } from './cytoscapeStyles'
+import { cytoscapeStyles, edgeVisual } from './cytoscapeStyles'
 import { blendColor, classColor, UNLABELED_COLOR } from './colors'
 import type { NodeOut } from '../types'
 
@@ -66,12 +66,21 @@ export class CytoscapeGraphController {
     })
   }
 
-  addEdge(source: number, target: number, weight: number): void {
-    const id = `e${source}-${target}`
-    if (!this.cy.getElementById(id).empty()) return
-    this.cy.add({
-      data: { id, source: String(source), target: String(target), width: 1 + weight * 3 },
-    })
+  /**
+   * Add a slice of edges in one go. One `cy.add()` per edge forced a style
+   * recalculation and a redraw per edge, which saturated the main thread and
+   * stretched a 6.5s reveal past eleven seconds; a single batched add per
+   * animation frame keeps the build on its clock.
+   */
+  addEdges(edges: { source: number; target: number; weight: number }[]): void {
+    const additions = edges
+      .map(({ source, target, weight }) => ({
+        data: { id: `e${source}-${target}`, source: String(source), target: String(target), ...edgeVisual(weight) },
+      }))
+      .filter((element) => this.cy.getElementById(element.data.id).empty())
+
+    if (additions.length === 0) return
+    this.cy.batch(() => this.cy.add(additions))
   }
 
   clearEdges(): void {
@@ -86,12 +95,27 @@ export class CytoscapeGraphController {
     })
   }
 
+  /**
+   * Drop every mark a propagation step can leave behind. The canvas replays
+   * history from index 0 on each playhead move, so without this the augmenting
+   * and cut classes only ever accumulated: scrubbing backwards past a min-cut
+   * left the cut edges drawn over a graph that had not been cut yet.
+   */
+  clearTransientState(): void {
+    this.cy.edges().removeClass('augmenting cut')
+    this.cy.nodes().removeClass('on-path')
+  }
+
   highlightPath(path: number[]): void {
     this.cy.edges().removeClass('augmenting')
+    this.cy.nodes().removeClass('on-path')
     for (let i = 0; i < path.length - 1; i++) {
-      const edge = this.edgeBetween(path[i], path[i + 1])
-      edge.addClass('augmenting')
+      this.edgeBetween(path[i], path[i + 1]).addClass('augmenting')
     }
+    // Light the nodes too — a 2px orange thread through a few hundred edges is
+    // hard to follow on its own. The virtual source/sink indices sit past the
+    // end of the node list, so they simply match nothing.
+    path.forEach((node) => this.cy.getElementById(String(node)).addClass('on-path'))
   }
 
   applyCutEdges(cutEdges: [number, number][]): void {

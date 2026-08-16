@@ -116,6 +116,95 @@ def test_mincut_run_refuses_calibration_with_a_clear_reason(client, session):
     assert "hard partition" in response.json()["detail"]
 
 
+HARMONIC_RUN = {"algorithm": "harmonic", "max_iter": 300, "tol": 1e-5, "source_class": 0, "sink_class": 1}
+MINCUT_RUN = {"algorithm": "mincut", "max_iter": 200, "tol": 1e-4, "source_class": 0, "sink_class": 1}
+
+AGREEMENT_KEYS = [
+    "balanced_accuracy",
+    "macro_precision",
+    "macro_recall",
+    "macro_f1",
+    "weighted_f1",
+    "cohen_kappa",
+    "matthews_corrcoef",
+    "n_evaluated",
+]
+POSTERIOR_KEYS = [
+    "mean_entropy",
+    "mean_confidence",
+    "mean_margin",
+    "confidence_gap",
+    "brier_score",
+    "log_loss",
+    "auroc_macro",
+]
+
+
+def run_to_completion(client, session, params):
+    with client.websocket_connect(f"/ws/propagate/{session}") as socket:
+        socket.send_json(params)
+        while True:
+            message = socket.receive_json()
+            if message["type"] == "done":
+                return message
+
+
+def test_harmonic_done_event_carries_agreement_and_posterior_metrics(client, session):
+    done = run_to_completion(client, session, HARMONIC_RUN)
+
+    assert all(key in done for key in AGREEMENT_KEYS + POSTERIOR_KEYS)
+    assert done["n_evaluated"] > 0
+    assert -1.0 <= done["cohen_kappa"] <= 1.0
+    assert -1.0 <= done["matthews_corrcoef"] <= 1.0
+    assert 0.0 <= done["auroc_macro"] <= 1.0
+    assert done["brier_score"] >= 0.0
+    assert done["log_loss"] >= 0.0
+
+    # Two moons at low noise is easy, so the scores should agree with each other.
+    assert done["macro_f1"] > 0.8
+    assert done["cohen_kappa"] > 0.8
+
+
+def test_mincut_done_event_reports_agreement_but_no_posterior(client, session):
+    """A hard partition has nothing to calibrate, so those tiles must stay absent
+    rather than showing an invented posterior."""
+    done = run_to_completion(client, session, MINCUT_RUN)
+
+    assert all(key in done for key in AGREEMENT_KEYS)
+    assert not any(key in done for key in POSTERIOR_KEYS)
+
+
+def test_patient_zero_scenario_runs_end_to_end(client):
+    response = client.post(
+        "/api/datasets/generate",
+        json={
+            "dataset_type": "patient_zero",
+            "n_samples": 160,
+            "noise": 0.1,
+            "label_fraction": 0.12,
+            "seed": 4,
+        },
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["n_classes"] == 2
+    assert len(body["nodes"]) == 160
+
+    outbreak = body["session_id"]
+    with client.websocket_connect(f"/ws/graph/{outbreak}") as socket:
+        socket.send_json({"method": "knn", "k": 6, "sigma": 1.0, "mutual": False, "sparsify_threshold": 0.0})
+        while True:
+            if socket.receive_json()["type"] == "build_done":
+                break
+
+    done = run_to_completion(client, outbreak, HARMONIC_RUN)
+
+    # Local spread is recoverable from geometry; the flight-borne pocket is not,
+    # so this must land clearly above chance without pretending to be solved.
+    assert done["accuracy"] > 0.6
+    assert done["cohen_kappa"] > 0.2
+
+
 def test_arena_race_runs_and_keeps_budgets_equal(client, session):
     start = client.post(
         f"/api/arena/{session}/start",

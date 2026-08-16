@@ -69,6 +69,7 @@ Propagation Studio provides:
 - **Interactive Graph Construction**:
   - Synthetic datasets (Two Moons, Concentric Circles, Multi-cluster Blobs) or custom CSV upload with automated feature standardisation and PCA / t-SNE 2D projections.
   - Configurable k-Nearest Neighbors ($k$-NN), $\varepsilon$-neighborhoods, Mutual $k$-NN, and Gaussian/RBF weighting.
+  - **Patient Zero** — an outbreak scenario whose labels come from a stochastic SIR cascade running over a contact network, not from a decision boundary. Infection follows *reachability*, so a handful of long-haul flight contacts seed pockets no distance-based method can explain: the failure is small, structured, and diagnosable by the interpretability panels.
 - **Dual Semi-Supervised Algorithms**:
   - **Harmonic Functions / Dirichlet Problem**: Continuous relaxation of label propagation with exact Closed-Form matrix solutions and iterative Jacobi streaming.
   - **Min-Cut / Graph Cuts**: Exact combinatorial discrete labeling via maximum flow / minimum $s$-$t$ cut algorithms.
@@ -79,6 +80,12 @@ Propagation Studio provides:
   - **Influence Explorer**: Measure the precise mathematical influence $\frac{\partial f_u}{\partial f_l}$ of each labeled seed on any unlabeled node.
   - **Node Inspector**: Instant drill-down on node posteriors, margin certainty, neighborhood label purity, and dominant seed attractors.
   - **Diagnostics & Calibration**: Reliability diagrams (Expected Calibration Error), Risk-Coverage trade-off curves, and graph assortativity metrics.
+- **Full Evaluation Suite**:
+  - **Agreement & balance**: balanced accuracy, macro / weighted F1, macro precision-recall, Cohen's kappa, and multiclass Matthews correlation — chance-corrected scores that an imbalanced graph cannot inflate.
+  - **Posterior quality** (harmonic): mean entropy and margin, one-vs-rest macro AUROC, multiclass Brier score, log loss, and a confidence-minus-accuracy gap that flags overconfidence. Min-cut returns a hard partition and says so instead of inventing a posterior.
+- **Timeline Playback**:
+  - Runs animate themselves — build, propagate, and cut steps play on a client-side clock at 0.5×–4× rather than at whatever speed the socket happened to deliver.
+  - Scrub or step backwards to any earlier moment; the canvas rewinds and replays, so past states are genuinely reconstructed rather than left painted over.
 - **Modern Responsive Interface**:
   - High-performance dark UI built with React 18, TypeScript, and Cytoscape.js.
   - Zero-lag rendering with custom layout animations, spring physics, and color interpolation.
@@ -448,7 +455,7 @@ This project is pre-configured with zero-friction deployment settings for **Rail
 ### REST Endpoints
 
 - `GET /health` — Health check endpoint for uptime monitoring and load balancers.
-- `POST /api/datasets/generate` — Generate synthetic datasets (`two_moons`, `circles`, `blobs`).
+- `POST /api/datasets/generate` — Generate synthetic datasets (`two_moons`, `circles`, `blobs`, `patient_zero`).
 - `POST /api/datasets/upload` — Upload custom CSV datasets with automatic dimensionality reduction.
 - `POST /api/experiments/{session_id}/label-efficiency` — Execute sweep over varying label fractions.
 - `GET /api/explain/{session_id}/graph` — Retrieve topology diagnostics, edge weights, and assortativity.

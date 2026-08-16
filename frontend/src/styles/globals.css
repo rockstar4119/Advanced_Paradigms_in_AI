@@ -555,6 +555,42 @@ button:disabled {
   font-size: 0.82rem;
   margin: 0;
 }
+.hint-text--spaced {
+  margin: 18px 0 4px;
+  line-height: 1.5;
+}
+
+/* ---------- scenario callout ---------- */
+
+.scenario-card {
+  margin: -2px 0 14px;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+}
+.scenario-title {
+  display: block;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  color: var(--accent-strong);
+  margin-bottom: 6px;
+}
+.scenario-body {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+.scenario-hint {
+  margin: 8px 0 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
 
 /* ---------- stage / canvas ---------- */
 
@@ -728,6 +764,27 @@ button:disabled {
 
 .playback-controls input[type='range'] {
   flex: 1;
+}
+
+.speed-btn {
+  flex: none;
+  padding: 5px 9px;
+  min-width: 44px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  box-shadow: none;
+}
+.speed-btn:hover {
+  background: var(--line-strong);
+  color: var(--ink);
+  transform: none;
+  box-shadow: none;
 }
 
 .playback-count {
